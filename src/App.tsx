@@ -110,10 +110,6 @@ const App: Component = () => {
       setConnected(false);
     });
     setConnector(connector);
-
-    if (connector) {
-      getAccounts();
-    }
   };
 
   const disconnect = async () => {
@@ -220,6 +216,22 @@ const App: Component = () => {
     }
   };
 
+  const handleGetWalletAddress = () => {
+    if (extensionConnected()) {
+      alert(`address for ${CHAIN_NAME} : ${extensionAddress()}`);
+      return;
+    }
+
+    if (!connected) {
+      alert("pls connect your wallet first!");
+      return;
+    }
+
+    getAccounts();
+
+    alert(`account value returned: ${account()}`);
+  };
+
   return (
     <>
       <Container>
@@ -314,13 +326,7 @@ const App: Component = () => {
               <Button
                 type="submit"
                 variant="primary"
-                onClick={() =>
-                  alert(
-                    `address for ${CHAIN_NAME} : ${
-                      connected() ? account()?.address : extensionAddress()
-                    }`
-                  )
-                }
+                onClick={handleGetWalletAddress}
               >
                 Get address
               </Button>
