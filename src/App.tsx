@@ -52,6 +52,8 @@ const App: Component = () => {
   );
   const [connected, setConnected] = createSignal<boolean>(false);
   const [wcUri, setWcUri] = createSignal<string>("");
+  const [wcMobileModalOpen, setWcMobileModalOpen] =
+    createSignal<boolean>(false);
   const [account, setAccount] = createSignal();
   const [osmoAccount, setOsmoAccount] = createSignal();
   const [lastTxHash, setLastTxHash] = createSignal();
@@ -90,6 +92,12 @@ const App: Component = () => {
       })();
     });
   });
+
+  const wcConnect = async () => {
+    if (checkMobile()) {
+      set;
+    }
+  };
 
   const connect = async () => {
     const connector = await cosmostationWalletConnect.connect(
@@ -168,7 +176,6 @@ const App: Component = () => {
     try {
       setExtensionConnector(await tendermint());
       await getExtensionAccounts();
-      setExtensionConnected(true);
     } catch {
       setExtensionConnected(false);
     }
@@ -205,6 +212,7 @@ const App: Component = () => {
       );
 
       setExtensionAddress(accountInfo ? accountInfo.address : "");
+      setExtensionConnected(true);
     } catch (e) {
       console.error(e);
     }
@@ -415,7 +423,10 @@ const App: Component = () => {
         </Card> */}
         </Stack>
       </Container>
-      {/* <WalletConnectModal isVisible={true} uri={"tdsiodfjsaojdas8"} /> */}
+      <WalletConnectModal
+        isVisible={wcUri().length > 0 && checkMobile()}
+        uri={wcUri()}
+      />
     </>
   );
 };

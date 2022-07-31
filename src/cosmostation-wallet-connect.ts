@@ -1,9 +1,10 @@
+import { Setter } from "solid-js";
 import CosmostationQRCodeModal from "@walletconnect/qrcode-modal";
 import WalletConnect from "@walletconnect/client";
 import { payloadId } from "@walletconnect/utils";
-import { Setter } from "solid-js";
 
 export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
+  const wcLogoURI = "/osmosis-logo-wc.png";
   const connector = new WalletConnect({
     bridge: "https://bridge.walletconnect.org",
     signingMethods: [
@@ -23,6 +24,22 @@ export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
       },
     },
   });
+
+  // XXX: I don't know why they designed that the client meta options in the constructor should be always ingored...
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  connector._clientMeta = {
+    name: "Coinhall",
+    description:
+      "Coinhall provides prices, charts, swap aggregations and analytics in realtime for Terra, Juno, and Cosmos chains.",
+    url: "https://coinhall.org/",
+    icons: wcLogoURI
+      ? [
+          // Keplr mobile app can't show svg image.
+          window.location.origin + wcLogoURI,
+        ]
+      : [],
+  };
 
   if (connector.connected) {
     await connector.killSession();
