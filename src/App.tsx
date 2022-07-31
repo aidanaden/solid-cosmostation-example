@@ -56,6 +56,7 @@ const App: Component = () => {
   const [account, setAccount] = createSignal<
     RequestAccountResponse | undefined
   >();
+  const [walletAddress, setWalletAddress] = createSignal<string>("");
   const [osmoAccount, setOsmoAccount] = createSignal();
   const [lastTxHash, setLastTxHash] = createSignal();
   const checkMobile = () => isMobile();
@@ -139,7 +140,7 @@ const App: Component = () => {
   //   });
   // };
 
-  const getAccounts = () => {
+  const getAccounts = async () => {
     if (!connector()) {
       alert("connector not found :(");
       return;
@@ -151,10 +152,9 @@ const App: Component = () => {
     connector()
       ?.sendCustomRequest(request)
       .then((accounts) => {
-        // const account = _.get(accounts, 0);
-        alert("accounts: " + JSON.stringify(accounts));
-        const account = accounts["0"];
+        const account = accounts[0];
         setAccount(account);
+        setWalletAddress(account["bech32Address"]);
       })
       .catch((error) => {
         console.error(error);
@@ -167,7 +167,6 @@ const App: Component = () => {
     Tendermint | undefined
   >(undefined);
   const [extensionConnected, setExtensionConnected] = createSignal(false);
-  const [extensionAddress, setExtensionAddress] = createSignal("");
   const [extensionLastTxHash, setExtensionLastTxHash] = createSignal();
 
   const extensionConnect = async () => {
@@ -209,16 +208,16 @@ const App: Component = () => {
         CHAIN_NAME
       );
 
-      setExtensionAddress(accountInfo ? accountInfo.address : "");
+      setWalletAddress(accountInfo ? accountInfo.address : "");
       setExtensionConnected(true);
     } catch (e) {
       console.error(e);
     }
   };
 
-  const handleGetWalletAddress = () => {
+  const handleGetWalletAddress = async () => {
     if (extensionConnected()) {
-      alert(`address for ${CHAIN_NAME} : ${extensionAddress()}`);
+      alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
       return;
     }
 
@@ -227,9 +226,7 @@ const App: Component = () => {
       return;
     }
 
-    getAccounts();
-
-    alert(`account value returned: ${account()}`);
+    await getAccounts();
   };
 
   return (
