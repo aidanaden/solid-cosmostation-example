@@ -25,6 +25,7 @@ import { isMobile } from "@walletconnect/browser-utils";
 import cosmostationWalletConnect from "./cosmostation-wallet-connect";
 import WalletConnect from "@walletconnect/client";
 import WalletConnectModal from "./WalletConnectModal";
+import { RequestAccountResponse } from "@cosmostation/extension-client/types/message";
 
 // const CHAIN_ID = "crescent-1";
 // const LCD_ENDPOINT = "https://lcd-crescent.cosmostation.io";
@@ -52,9 +53,9 @@ const App: Component = () => {
   );
   const [connected, setConnected] = createSignal<boolean>(false);
   const [wcUri, setWcUri] = createSignal<string>("");
-  const [wcMobileModalOpen, setWcMobileModalOpen] =
-    createSignal<boolean>(false);
-  const [account, setAccount] = createSignal();
+  const [account, setAccount] = createSignal<
+    RequestAccountResponse | undefined
+  >();
   const [osmoAccount, setOsmoAccount] = createSignal();
   const [lastTxHash, setLastTxHash] = createSignal();
   const checkMobile = () => isMobile();
@@ -307,7 +308,11 @@ const App: Component = () => {
                 type="submit"
                 variant="primary"
                 onClick={() =>
-                  alert(`address for ${CHAIN_NAME} : ${extensionAddress()}`)
+                  alert(
+                    `address for ${CHAIN_NAME} : ${
+                      connected() ? account()?.address : extensionAddress()
+                    }`
+                  )
                 }
               >
                 Get address
