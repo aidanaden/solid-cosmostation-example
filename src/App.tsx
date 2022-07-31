@@ -93,12 +93,6 @@ const App: Component = () => {
     });
   });
 
-  const wcConnect = async () => {
-    if (checkMobile()) {
-      set;
-    }
-  };
-
   const connect = async () => {
     const connector = await cosmostationWalletConnect.connect(
       checkMobile(),
@@ -149,20 +143,21 @@ const App: Component = () => {
   // };
 
   const getAccounts = () => {
-    if (connector()) {
-      const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
-      connector()
-        ?.sendCustomRequest(request)
-        .then((accounts) => {
-          const account = _.get(accounts, 0);
-          setAccount(account);
-        })
-        .catch((error) => {
-          console.error(error);
-          alert(error.message);
-          setAccount();
-        });
-    }
+    if (!connector()) return;
+
+    const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
+    connector()
+      ?.sendCustomRequest(request)
+      .then((accounts) => {
+        // const account = _.get(accounts, 0);
+        const account = accounts["0"];
+        setAccount(account);
+      })
+      .catch((error) => {
+        console.error(error);
+        alert(error.message);
+        setAccount();
+      });
   };
 
   const [extensionConnector, setExtensionConnector] = createSignal<
@@ -217,10 +212,6 @@ const App: Component = () => {
       console.error(e);
     }
   };
-
-  createEffect(() => {
-    console.log("is mobile: ", checkMobile());
-  });
 
   return (
     <>
