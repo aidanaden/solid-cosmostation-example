@@ -149,6 +149,8 @@ const App: Component = () => {
       return;
     }
 
+    alert("getting walletconnect accounts!!!");
+
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     connector()
       ?.sendCustomRequest(request)
