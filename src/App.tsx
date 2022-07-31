@@ -144,7 +144,10 @@ const App: Component = () => {
   // };
 
   const getAccounts = () => {
-    if (!connector()) return;
+    if (!connector()) {
+      alert("connector not found :(");
+      return;
+    }
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     connector()
