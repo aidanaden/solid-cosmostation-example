@@ -151,6 +151,7 @@ const App: Component = () => {
       ?.sendCustomRequest(request)
       .then((accounts) => {
         // const account = _.get(accounts, 0);
+        alert("accounts: " + JSON.stringify(accounts));
         const account = accounts["0"];
         setAccount(account);
       })
