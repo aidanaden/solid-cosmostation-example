@@ -13,7 +13,7 @@ export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
     ],
     qrcodeModal: {
       open: (uri: string, cb: any) => {
-        if (isMobile) {
+        if (!isMobile) {
           CosmostationQRCodeModal.open(uri, cb);
         }
         setWCUri(uri);
