@@ -1,0 +1,27 @@
+{
+  "name": "vite-template-solid",
+  "version": "0.0.0",
+  "description": "",
+  "scripts": {
+    "start": "vite",
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "bootstrap": "^5.2.0",
+    "typescript": "^4.7.4",
+    "vite": "^3.0.0",
+    "vite-plugin-solid": "^2.3.0"
+  },
+  "dependencies": {
+    "@cosmostation/extension-client": "^0.1.4",
+    "@walletconnect/browser-utils": "^1.7.8",
+    "@walletconnect/client": "^1.7.8",
+    "@walletconnect/qrcode-modal": "^1.7.8",
+    "buffer": "^6.0.3",
+    "solid-bootstrap": "^1.0.8",
+    "solid-js": "^1.4.7"
+  }
+}
