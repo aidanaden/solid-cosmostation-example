@@ -31,19 +31,23 @@ const WalletConnectModal: Component<Props> = (props) => {
       if (checkAndroid()) {
         // Save the mobile link.
         saveMobileLinkInfo({
-          name: "Keplr",
-          href: "intent://wcV1#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;",
+          //   name: "Keplr",
+          name: "Cosmostation",
+          //   href: "intent://wcV1#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;",
+          href: "intent://wc#Intent;package=wannabit.io.cosmostaion;scheme=cosmostation;end;",
         });
 
-        return `intent://wcV1?${props.uri}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`;
+        // return `intent://wcV1?${props.uri}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`;
+
+        return `intent://wc?${props.uri}#Intent;package=wannabit.io.cosmostaion;scheme=cosmostation;end;`;
       } else {
         // Save the mobile link.
         saveMobileLinkInfo({
-          name: "Keplr",
-          href: "keplrwallet://wcV1",
+          name: "Cosmostation",
+          href: "cosmostation://wc",
         });
 
-        return `keplrwallet://wcV1?${props.uri}`;
+        return `cosmostation://wc?${props.uri}`;
       }
     }
   });
