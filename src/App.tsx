@@ -111,6 +111,8 @@ const App: Component = () => {
       setConnected(false);
     });
     setConnector(connector);
+
+    await getAccounts();
   };
 
   const disconnect = async () => {
@@ -215,18 +217,19 @@ const App: Component = () => {
     }
   };
 
-  const handleGetWalletAddress = async () => {
-    if (extensionConnected()) {
-      alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
-      return;
-    }
+  const handleGetWalletAddress = () => {
+    alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
+    // if (extensionConnected()) {
+    //   alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
+    //   return;
+    // }
 
-    if (!connected) {
-      alert("pls connect your wallet first!");
-      return;
-    }
+    // if (!connected) {
+    //   alert("pls connect your wallet first!");
+    //   return;
+    // }
 
-    await getAccounts();
+    // await getAccounts();
   };
 
   return (
