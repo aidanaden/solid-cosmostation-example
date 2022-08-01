@@ -111,8 +111,6 @@ const App: Component = () => {
       setConnected(false);
     });
     setConnector(connector);
-
-    await getAccounts();
   };
 
   const disconnect = async () => {
@@ -145,6 +143,10 @@ const App: Component = () => {
   const getAccounts = async () => {
     if (!connector()) {
       alert("connector not found :(");
+      return;
+    }
+
+    if (account()) {
       return;
     }
 
@@ -217,7 +219,8 @@ const App: Component = () => {
     }
   };
 
-  const handleGetWalletAddress = () => {
+  const handleGetWalletAddress = async () => {
+    await getAccounts();
     alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
     // if (extensionConnected()) {
     //   alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
