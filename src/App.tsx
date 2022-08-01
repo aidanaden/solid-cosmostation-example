@@ -218,7 +218,6 @@ const App: Component = () => {
 
   const handleGetWalletAddress = async () => {
     await getAccounts();
-    alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
   };
 
   return (
@@ -311,7 +310,7 @@ const App: Component = () => {
           <Card>
             <Card.Header>Get cosmostation wallet address</Card.Header>
             <Card.Body>
-              {`${account()}`}
+              {walletAddress()}
               <Button
                 type="submit"
                 variant="primary"
