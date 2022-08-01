@@ -103,6 +103,7 @@ const App: Component = () => {
     );
     connector.on("connect", (error, payload) => {
       if (error) {
+        alert(`error occurred while trying to connect via wc: ${error}`);
         setConnected(false);
         throw error;
       }
