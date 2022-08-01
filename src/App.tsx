@@ -5,6 +5,7 @@ import {
   onCleanup,
   onMount,
   Show,
+  on,
 } from "solid-js";
 import {
   Card,
@@ -219,6 +220,12 @@ const App: Component = () => {
   const handleGetWalletAddress = async () => {
     await getAccounts();
   };
+
+  createEffect(
+    on(connected, (connected) => {
+      alert(`connected value: ${connected}`);
+    })
+  );
 
   return (
     <>
