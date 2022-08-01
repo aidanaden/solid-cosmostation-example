@@ -142,15 +142,12 @@ const App: Component = () => {
 
   const getAccounts = async () => {
     if (!connector()) {
-      alert("connector not found :(");
       return;
     }
 
     if (account()) {
       return;
     }
-
-    alert("getting walletconnect accounts!!!");
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     connector()
@@ -222,17 +219,6 @@ const App: Component = () => {
   const handleGetWalletAddress = async () => {
     await getAccounts();
     alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
-    // if (extensionConnected()) {
-    //   alert(`address for ${CHAIN_NAME} : ${walletAddress()}`);
-    //   return;
-    // }
-
-    // if (!connected) {
-    //   alert("pls connect your wallet first!");
-    //   return;
-    // }
-
-    // await getAccounts();
   };
 
   return (
