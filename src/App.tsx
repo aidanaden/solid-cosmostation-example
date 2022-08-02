@@ -142,6 +142,8 @@ const App: Component = () => {
   //   });
   // };
 
+  const [fetching, setFetching] = createSignal<boolean>(false);
+
   const getAccounts = async () => {
     if (!connector()) {
       return;
@@ -150,6 +152,8 @@ const App: Component = () => {
     if (account()) {
       return;
     }
+
+    setFetching(true);
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     connector()
@@ -315,6 +319,7 @@ const App: Component = () => {
           </Show>
           <Card>
             <Card.Header>Get cosmostation wallet address</Card.Header>
+            {`fetching value: ${fetching()}`}
             <Card.Body>
               <Button
                 type="submit"
