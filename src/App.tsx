@@ -52,7 +52,7 @@ const App: Component = () => {
   const [connector, setConnector] = createSignal<WalletConnect | undefined>(
     undefined
   );
-  const [connected, setConnected] = createSignal<boolean>(false);
+  const [mobileConnected, setMobileConnected] = createSignal<boolean>(false);
   const [wcUri, setWcUri] = createSignal<string>("");
   const [account, setAccount] = createSignal<
     RequestAccountResponse | undefined
@@ -96,7 +96,7 @@ const App: Component = () => {
     });
   });
 
-  const connect = async () => {
+  const mobileConnect = async () => {
     const connector = await cosmostationWalletConnect.connect(
       checkMobile(),
       setWcUri
@@ -104,18 +104,18 @@ const App: Component = () => {
     connector.on("connect", (error, payload) => {
       if (error) {
         alert(`error occurred while trying to connect via wc: ${error}`);
-        setConnected(false);
+        setMobileConnected(false);
         throw error;
       }
-      setConnected(true);
+      setMobileConnected(true);
     });
     connector.on("disconnect", (error, payload) => {
-      setConnected(false);
+      setMobileConnected(false);
     });
     setConnector(connector);
   };
 
-  const disconnect = async () => {
+  const mobileDisconnect = async () => {
     if (!connector()) {
       return;
     }
@@ -124,7 +124,7 @@ const App: Component = () => {
       ?.killSession()
       .catch((err) => console.error(err));
     setConnector(undefined);
-    setConnected(false);
+    setMobileConnected(false);
   };
 
   // const debugConnect = async () => {
@@ -218,13 +218,9 @@ const App: Component = () => {
     }
   };
 
-  const handleGetWalletAddress = async () => {
-    await getAccounts();
-  };
-
   createEffect(
-    on(connected, (connected) => {
-      alert(`connected value: ${connected}`);
+    on(connector, async () => {
+      await getAccounts();
     })
   );
 
@@ -281,7 +277,7 @@ const App: Component = () => {
             }
           >
             <Show
-              when={!!connected()}
+              when={!!mobileConnected()}
               fallback={
                 <Card>
                   <Card.Header>Connect cosmostation wallet</Card.Header>
@@ -290,7 +286,7 @@ const App: Component = () => {
                       type="submit"
                       variant="primary"
                       // onClick={() => openWallet(junoChainInfo)
-                      onClick={connect}
+                      onClick={mobileConnect}
                     >
                       Connect cosmostation via walletconnect
                     </Button>
@@ -307,7 +303,7 @@ const App: Component = () => {
                     type="submit"
                     variant="primary"
                     // onClick={() => openWallet(junoChainInfo)}
-                    onClick={disconnect}
+                    onClick={mobileDisconnect}
                   >
                     Disconnect
                   </Button>
@@ -318,11 +314,10 @@ const App: Component = () => {
           <Card>
             <Card.Header>Get cosmostation wallet address</Card.Header>
             <Card.Body>
-              {walletAddress()}
               <Button
                 type="submit"
                 variant="primary"
-                onClick={handleGetWalletAddress}
+                onClick={() => alert(`wallet address: ${walletAddress()}`)}
               >
                 Get address
               </Button>
