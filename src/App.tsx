@@ -101,12 +101,13 @@ const App: Component = () => {
       checkMobile(),
       setWcUri
     );
-    connector.on("connect", (error, payload) => {
+    connector.on("connect", async (error, payload) => {
       if (error) {
         alert(`error occurred while trying to connect via wc: ${error}`);
         setMobileConnected(false);
         throw error;
       }
+      await getAccounts();
       setMobileConnected(true);
     });
     connector.on("disconnect", (error, payload) => {
@@ -223,14 +224,14 @@ const App: Component = () => {
     }
   };
 
-  createEffect(
-    on(connector, async (connector) => {
-      if (connector) {
-        alert("fetching walletconnect account");
-        await getAccounts();
-      }
-    })
-  );
+  // createEffect(
+  //   on(connector, async (connector) => {
+  //     if (connector) {
+  //       alert("fetching walletconnect account");
+  //       await getAccounts();
+  //     }
+  //   })
+  // );
 
   return (
     <>
