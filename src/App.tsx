@@ -226,6 +226,7 @@ const App: Component = () => {
   createEffect(
     on(connector, async (connector) => {
       if (connector) {
+        alert("fetching walletconnect account");
         await getAccounts();
       }
     })
