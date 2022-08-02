@@ -162,6 +162,7 @@ const App: Component = () => {
         const account = accounts[0];
         setAccount(account);
         setWalletAddress(account["bech32Address"]);
+        setFetching(false);
       })
       .catch((error) => {
         console.error(error);
