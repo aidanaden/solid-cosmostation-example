@@ -49,6 +49,7 @@ const OSMO_LCD_ENDPOINT = "https://lcd-osmosis-app.cosmostation.io";
 const OSMO_TO_ADDRESS = "osmo1ze2ye5u5k3qdlexvt2e0nn0508p0409465lts4";
 
 const App: Component = () => {
+  // wc state values
   const [connector, setConnector] = createSignal<WalletConnect | undefined>(
     undefined
   );
@@ -57,16 +58,26 @@ const App: Component = () => {
   const [account, setAccount] = createSignal<
     RequestAccountResponse | undefined
   >();
+
+  // extension state values
+  const [extensionConnector, setExtensionConnector] = createSignal<
+    Tendermint | undefined
+  >(undefined);
+  const [extensionConnected, setExtensionConnected] = createSignal(false);
+  const [extensionLastTxHash, setExtensionLastTxHash] = createSignal();
+
   const [walletAddress, setWalletAddress] = createSignal<string>("");
   const [osmoAccount, setOsmoAccount] = createSignal();
   const [lastTxHash, setLastTxHash] = createSignal();
   const checkMobile = () => isMobile();
 
+  // check for
   onMount(() => {
     let event: any;
     void (async function async() {
-      console.log("running on mount fn!");
       try {
+        if (checkMobile()) return;
+
         await extensionConnect();
         event = extensionConnector()?.onAccountChanged(() =>
           console.log("changed")
@@ -143,18 +154,11 @@ const App: Component = () => {
   //   });
   // };
 
-  const [fetching, setFetching] = createSignal<boolean>(false);
-
   const getAccounts = async () => {
-    if (!connector()) {
-      return;
-    }
-
-    if (account()) {
-      return;
-    }
-
-    setFetching(true);
+    // if not connected via walletconnect, return
+    if (!connector()) return;
+    // if wallet account already set, return
+    if (account()) return;
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     connector()
@@ -163,7 +167,6 @@ const App: Component = () => {
         const account = accounts[0];
         setAccount(account);
         setWalletAddress(account["bech32Address"]);
-        setFetching(false);
       })
       .catch((error) => {
         console.error(error);
@@ -171,12 +174,6 @@ const App: Component = () => {
         setAccount();
       });
   };
-
-  const [extensionConnector, setExtensionConnector] = createSignal<
-    Tendermint | undefined
-  >(undefined);
-  const [extensionConnected, setExtensionConnected] = createSignal(false);
-  const [extensionLastTxHash, setExtensionLastTxHash] = createSignal();
 
   const extensionConnect = async () => {
     try {
@@ -223,15 +220,6 @@ const App: Component = () => {
       console.error(e);
     }
   };
-
-  // createEffect(
-  //   on(connector, async (connector) => {
-  //     if (connector) {
-  //       alert("fetching walletconnect account");
-  //       await getAccounts();
-  //     }
-  //   })
-  // );
 
   return (
     <>
@@ -322,7 +310,6 @@ const App: Component = () => {
           </Show>
           <Card>
             <Card.Header>Get cosmostation wallet address</Card.Header>
-            {`fetching value: ${fetching()}`}
             <Card.Body>
               <Button
                 type="submit"
