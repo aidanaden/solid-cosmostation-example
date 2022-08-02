@@ -219,8 +219,10 @@ const App: Component = () => {
   };
 
   createEffect(
-    on(connector, async () => {
-      await getAccounts();
+    on(connector, async (connector) => {
+      if (connector) {
+        await getAccounts();
+      }
     })
   );
 
