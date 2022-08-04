@@ -71,6 +71,8 @@ const App: Component = () => {
   const [lastTxHash, setLastTxHash] = createSignal();
   const checkMobile = () => isMobile();
 
+  let callbackClosed: (() => void) | undefined;
+
   // check for
   onMount(() => {
     let event: any;
@@ -119,7 +121,8 @@ const App: Component = () => {
   const mobileConnect = async () => {
     const wcConnector = await cosmostationWalletConnect.connect(
       checkMobile(),
-      setWcUri
+      setWcUri,
+      callbackClosed
     );
 
     // if (connector.connected) {
@@ -169,6 +172,10 @@ const App: Component = () => {
   const mobileDisconnect = async () => {
     if (!connector()) {
       return;
+    }
+
+    if (callbackClosed) {
+      callbackClosed();
     }
 
     await connector()

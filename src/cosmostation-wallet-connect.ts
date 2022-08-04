@@ -3,7 +3,11 @@ import CosmostationQRCodeModal from "@walletconnect/qrcode-modal";
 import WalletConnect from "@walletconnect/client";
 import { payloadId } from "@walletconnect/utils";
 
-export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
+export async function connect(
+  isMobile: boolean,
+  setWCUri: Setter<string>,
+  callbackClosed: (() => void) | undefined
+) {
   const wcLogoURI = "/osmosis-logo-wc.png";
   const connector = new WalletConnect({
     bridge: "https://bridge.walletconnect.org",
@@ -18,6 +22,7 @@ export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
         }
         setWCUri(uri);
         // TODO: set cb as ref to be called when WC modal closes
+        callbackClosed = cb;
       },
       close: () => {
         setWCUri("");
