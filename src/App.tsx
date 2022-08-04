@@ -145,7 +145,7 @@ const App: Component = () => {
           setMobileConnected(false);
           return;
         }
-        await getAccounts(wcConnector);
+        await getAccounts(connector());
         setMobileConnected(true);
       });
       // connector.on("connect", async (error) => {
@@ -160,7 +160,7 @@ const App: Component = () => {
       //   return Promise.resolve(keplr);
       // });
     } else {
-      await getAccounts(wcConnector);
+      await getAccounts(connector());
       setMobileConnected(true);
     }
     setConnector(wcConnector);
@@ -193,9 +193,11 @@ const App: Component = () => {
   //   });
   // };
 
-  const getAccounts = async (connector: WalletConnect) => {
+  const getAccounts = async (connector: WalletConnect | undefined) => {
     // if wallet account already set, return
     if (account()) return;
+
+    if (!connector) return;
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     // try {
@@ -324,7 +326,7 @@ const App: Component = () => {
             }
           >
             <Show
-              when={!!mobileConnected() && walletAddress() !== ""}
+              when={!!mobileConnected()}
               fallback={
                 <Card>
                   <Card.Header>Connect cosmostation wallet</Card.Header>
