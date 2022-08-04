@@ -125,47 +125,57 @@ const App: Component = () => {
       callbackClosed
     );
 
-    // if (connector.connected) {
-    //   await connector.killSession();
-    // }
-    // await connector.createSession();
+    if (wcConnector.connected) {
+      await wcConnector.killSession();
+    }
+    await wcConnector.createSession();
 
     wcConnector.on("disconnect", async (error, payload) => {
       if (error) {
         console.error("error occurred on disconnect: ", error);
         return;
       }
-      setMobileConnected(false);
       await connector()?.killSession();
+      setMobileConnected(false);
     });
 
-    if (!wcConnector.connected) {
-      // create new session
-      await wcConnector.createSession();
-      wcConnector.on("connect", async (error, payload) => {
-        if (error) {
-          console.error("error occurred on disconnect: ", error);
-          setMobileConnected(false);
-          return;
-        }
-        await getAccounts(connector());
-        setMobileConnected(true);
-      });
-      // connector.on("connect", async (error) => {
-      //   if (error) {
-      //     console.error(error);
-      //   }
-      //   const keplr = new KeplrWalletConnectV1(connector, {
-      //     sendTx: sendTxWC,
-      //   });
-      //   setConnectionType("wallet-connect");
-      //   await setupKeplr(keplr);
-      //   return Promise.resolve(keplr);
-      // });
-    } else {
+    wcConnector.on("connect", async (error, payload) => {
+      if (error) {
+        console.error("error occurred on disconnect: ", error);
+        setMobileConnected(false);
+        return;
+      }
       await getAccounts(connector());
       setMobileConnected(true);
-    }
+    });
+
+    // if (!wcConnector.connected) {
+    //   // create new session
+    //   await wcConnector.createSession();
+    //   wcConnector.on("connect", async (error, payload) => {
+    //     if (error) {
+    //       console.error("error occurred on disconnect: ", error);
+    //       setMobileConnected(false);
+    //       return;
+    //     }
+    //     await getAccounts(connector());
+    //     setMobileConnected(true);
+    //   });
+    //   // connector.on("connect", async (error) => {
+    //   //   if (error) {
+    //   //     console.error(error);
+    //   //   }
+    //   //   const keplr = new KeplrWalletConnectV1(connector, {
+    //   //     sendTx: sendTxWC,
+    //   //   });
+    //   //   setConnectionType("wallet-connect");
+    //   //   await setupKeplr(keplr);
+    //   //   return Promise.resolve(keplr);
+    //   // });
+    // } else {
+    //   await getAccounts(connector());
+    //   setMobileConnected(true);
+    // }
     setConnector(wcConnector);
   };
 
