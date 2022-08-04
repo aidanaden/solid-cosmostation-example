@@ -95,27 +95,27 @@ const App: Component = () => {
       }
     })();
 
-    onCleanup(() => {
-      void (async () => {
-        try {
-          if (extensionConnector()) {
-            extensionConnector()?.offAccountChanged(event);
-          }
+    // onCleanup(() => {
+    //   void (async () => {
+    //     try {
+    //       if (extensionConnector()) {
+    //         extensionConnector()?.offAccountChanged(event);
+    //       }
 
-          if (mobileConnected()) {
-            await connector()
-              ?.killSession()
-              .catch((e) => console.error(e));
-          }
-        } catch (e) {
-          if (e instanceof InstallError) {
-            console.log("not installed");
-          } else {
-            console.log("failed");
-          }
-        }
-      })();
-    });
+    //       if (mobileConnected()) {
+    //         await connector()
+    //           ?.killSession()
+    //           .catch((e) => console.error(e));
+    //       }
+    //     } catch (e) {
+    //       if (e instanceof InstallError) {
+    //         console.log("not installed");
+    //       } else {
+    //         console.log("failed");
+    //       }
+    //     }
+    //   })();
+    // });
   });
 
   const mobileConnect = async () => {
