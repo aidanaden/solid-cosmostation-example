@@ -198,31 +198,31 @@ const App: Component = () => {
     if (account()) return;
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
-    try {
-      // alert(`fetching wallet account n address with connector ${connector}`);
-      const accounts = await connector.sendCustomRequest(request);
-      const account = accounts[0];
-      setAccount(account);
-      setWalletAddress(account["bech32Address"]);
-      // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
-    } catch (err) {
-      console.error(err);
-      setAccount(undefined);
-    }
+    // try {
+    //   // alert(`fetching wallet account n address with connector ${connector}`);
+    //   const accounts = await connector.sendCustomRequest(request);
+    //   const account = accounts[0];
+    //   setAccount(account);
+    //   setWalletAddress(account["bech32Address"]);
+    //   // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
+    // } catch (err) {
+    //   console.error(err);
+    //   setAccount(undefined);
+    // }
 
-    // connector
-    //   ?.sendCustomRequest(request)
-    //   .then((accounts) => {
-    //     const account = accounts[0];
-    //     setAccount(account);
-    //     setWalletAddress(account["bech32Address"]);
-    //     alert(`wallet connect setting address to: ${account["bech32Address"]}`);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //     alert(error.message);
-    //     setAccount(undefined);
-    //   });
+    connector
+      .sendCustomRequest(request)
+      .then((accounts) => {
+        const account = accounts[0];
+        setAccount(account);
+        setWalletAddress(account["bech32Address"]);
+        // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
+      })
+      .catch((error) => {
+        console.error(error);
+        // alert(error.message);
+        setAccount(undefined);
+      });
   };
 
   const extensionConnect = async () => {
