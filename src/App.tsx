@@ -215,7 +215,7 @@ const App: Component = () => {
       .then((accounts) => {
         const account = accounts[0];
         setAccount(account);
-        setWalletAddress(account["bech32Address"]);
+        setWalletAddress(`custom address: ${account["bech32Address"]}`);
         // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
       })
       .catch((error) => {
