@@ -150,7 +150,7 @@ const App: Component = () => {
         setMobileConnected(false);
         return;
       }
-      alert(`payload: ${payload}`);
+      alert(`payload: ${JSON.stringify(payload)}`);
       await getAccounts(connector());
       setMobileConnected(true);
     });
