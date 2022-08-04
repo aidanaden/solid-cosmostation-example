@@ -199,12 +199,12 @@ const App: Component = () => {
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     try {
-      alert(`fetching wallet account n address with connector ${connector}`);
+      // alert(`fetching wallet account n address with connector ${connector}`);
       const accounts = await connector.sendCustomRequest(request);
       const account = accounts[0];
       setAccount(account);
       setWalletAddress(account["bech32Address"]);
-      alert(`wallet connect setting address to: ${account["bech32Address"]}`);
+      // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
     } catch (err) {
       console.error(err);
       setAccount(undefined);
