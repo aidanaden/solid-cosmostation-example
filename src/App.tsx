@@ -76,7 +76,9 @@ const App: Component = () => {
     let event: any;
     void (async function async() {
       try {
-        if (checkMobile()) return;
+        if (checkMobile()) {
+          await mobileConnect();
+        }
 
         await extensionConnect();
         event = extensionConnector()?.onAccountChanged(() =>
@@ -94,8 +96,15 @@ const App: Component = () => {
     onCleanup(() => {
       void (async function async() {
         try {
-          if (!extensionConnector()) return;
-          extensionConnector()?.offAccountChanged(event);
+          if (extensionConnector()) {
+            extensionConnector()?.offAccountChanged(event);
+          }
+
+          if (mobileConnected()) {
+            connector()
+              ?.killSession()
+              .catch((e) => console.error(e));
+          }
         } catch (e) {
           if (e instanceof InstallError) {
             console.log("not installed");
