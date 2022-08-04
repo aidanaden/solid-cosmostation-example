@@ -76,7 +76,7 @@ const App: Component = () => {
   // check for
   onMount(() => {
     let event: any;
-    void (async function async() {
+    void (async () => {
       try {
         if (checkMobile()) {
           await mobileConnect();
@@ -96,14 +96,14 @@ const App: Component = () => {
     })();
 
     onCleanup(() => {
-      void (async function async() {
+      void (async () => {
         try {
           if (extensionConnector()) {
             extensionConnector()?.offAccountChanged(event);
           }
 
           if (mobileConnected()) {
-            connector()
+            await connector()
               ?.killSession()
               .catch((e) => console.error(e));
           }
@@ -138,7 +138,9 @@ const App: Component = () => {
         console.error("error occurred on disconnect: ", error);
         return;
       }
-      await connector()?.killSession();
+      await connector()
+        ?.killSession()
+        .catch((err) => console.error(err));
       setMobileConnected(false);
     });
 
@@ -148,6 +150,7 @@ const App: Component = () => {
         setMobileConnected(false);
         return;
       }
+      alert(`payload: ${payload}`);
       await getAccounts(connector());
       setMobileConnected(true);
     });
