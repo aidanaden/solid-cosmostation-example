@@ -324,7 +324,7 @@ const App: Component = () => {
             }
           >
             <Show
-              when={!!mobileConnected()}
+              when={!!mobileConnected() && walletAddress() !== ""}
               fallback={
                 <Card>
                   <Card.Header>Connect cosmostation wallet</Card.Header>
