@@ -117,7 +117,7 @@ const App: Component = () => {
   });
 
   const mobileConnect = async () => {
-    const connector = await cosmostationWalletConnect.connect(
+    const wcConnector = await cosmostationWalletConnect.connect(
       checkMobile(),
       setWcUri
     );
@@ -127,21 +127,25 @@ const App: Component = () => {
     // }
     // await connector.createSession();
 
-    connector.on("disconnect", async (error, payload) => {
+    wcConnector.on("disconnect", async (error, payload) => {
+      if (error) {
+        console.error("error occurred on disconnect: ", error);
+        return;
+      }
       setMobileConnected(false);
-      await connector.killSession();
+      await connector()?.killSession();
     });
 
-    if (!connector.connected) {
+    if (!wcConnector.connected) {
       // create new session
-      await connector.createSession();
-      connector.on("connect", async (error, payload) => {
+      await wcConnector.createSession();
+      wcConnector.on("connect", async (error, payload) => {
         if (error) {
-          alert(`error occurred while trying to connect via wc: ${error}`);
+          console.error("error occurred on disconnect: ", error);
           setMobileConnected(false);
-          throw error;
+          return;
         }
-        await getAccounts(connector);
+        await getAccounts(wcConnector);
         setMobileConnected(true);
       });
       // connector.on("connect", async (error) => {
@@ -156,10 +160,10 @@ const App: Component = () => {
       //   return Promise.resolve(keplr);
       // });
     } else {
-      await getAccounts(connector);
+      await getAccounts(wcConnector);
       setMobileConnected(true);
     }
-    setConnector(connector);
+    setConnector(wcConnector);
   };
 
   const mobileDisconnect = async () => {
