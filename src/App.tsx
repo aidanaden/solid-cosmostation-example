@@ -197,22 +197,32 @@ const App: Component = () => {
     // if wallet account already set, return
     if (account()) return;
 
-    alert(`fetching wallet account n address with connector ${connector}`);
-
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
-    connector
-      ?.sendCustomRequest(request)
-      .then((accounts) => {
-        const account = accounts[0];
-        setAccount(account);
-        setWalletAddress(account["bech32Address"]);
-        alert(`wallet connect setting address to: ${account["bech32Address"]}`);
-      })
-      .catch((error) => {
-        console.error(error);
-        alert(error.message);
-        setAccount(undefined);
-      });
+    try {
+      alert(`fetching wallet account n address with connector ${connector}`);
+      const accounts = await connector.sendCustomRequest(request);
+      const account = accounts[0];
+      setAccount(account);
+      setWalletAddress(account["bech32Address"]);
+      alert(`wallet connect setting address to: ${account["bech32Address"]}`);
+    } catch (err) {
+      console.error(err);
+      setAccount(undefined);
+    }
+
+    // connector
+    //   ?.sendCustomRequest(request)
+    //   .then((accounts) => {
+    //     const account = accounts[0];
+    //     setAccount(account);
+    //     setWalletAddress(account["bech32Address"]);
+    //     alert(`wallet connect setting address to: ${account["bech32Address"]}`);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //     alert(error.message);
+    //     setAccount(undefined);
+    //   });
   };
 
   const extensionConnect = async () => {
