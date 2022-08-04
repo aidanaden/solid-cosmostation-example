@@ -136,8 +136,9 @@ const App: Component = () => {
       await getAccounts(connector);
       setMobileConnected(true);
     });
-    connector.on("disconnect", (error, payload) => {
+    connector.on("disconnect", async (error, payload) => {
       setMobileConnected(false);
+      await connector.killSession();
     });
     setConnector(connector);
   };
@@ -180,11 +181,12 @@ const App: Component = () => {
         const account = accounts[0];
         setAccount(account);
         setWalletAddress(account["bech32Address"]);
+        alert(`wallet connect setting address to: ${account["bech32Address"]}`);
       })
       .catch((error) => {
         console.error(error);
         alert(error.message);
-        setAccount();
+        setAccount(undefined);
       });
   };
 
