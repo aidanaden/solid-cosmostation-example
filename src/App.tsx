@@ -125,13 +125,13 @@ const App: Component = () => {
       callbackClosed
     );
 
-    // if (wcConnector.connected) {
-    //   await wcConnector.killSession();
-    // }
-    // await wcConnector.createSession();
-    if (!wcConnector.connected) {
-      await wcConnector.createSession();
+    if (wcConnector.connected) {
+      await wcConnector.killSession();
     }
+    await wcConnector.createSession();
+    // if (!wcConnector.connected) {
+    //   await wcConnector.createSession();
+    // }
 
     wcConnector.on("disconnect", async (error, payload) => {
       if (error) {
@@ -220,31 +220,31 @@ const App: Component = () => {
     if (!connector) return;
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
-    // try {
-    //   // alert(`fetching wallet account n address with connector ${connector}`);
-    //   const accounts = await connector.sendCustomRequest(request);
-    //   const account = accounts[0];
-    //   setAccount(account);
-    //   setWalletAddress(account["bech32Address"]);
-    //   // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
-    // } catch (err) {
-    //   console.error(err);
-    //   setAccount(undefined);
-    // }
+    try {
+      // alert(`fetching wallet account n address with connector ${connector}`);
+      const accounts = await connector.sendCustomRequest(request);
+      const account = accounts[0];
+      setAccount(account);
+      setWalletAddress(account["bech32Address"]);
+      // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
+    } catch (err) {
+      console.error(err);
+      setAccount(undefined);
+    }
 
-    connector
-      .sendCustomRequest(request)
-      .then((accounts) => {
-        const account = accounts[0];
-        setAccount(account);
-        setWalletAddress(`custom address: ${account["bech32Address"]}`);
-        // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
-      })
-      .catch((error) => {
-        console.error(error);
-        // alert(error.message);
-        setAccount(undefined);
-      });
+    // connector
+    //   .sendCustomRequest(request)
+    //   .then((accounts) => {
+    //     const account = accounts[0];
+    //     setAccount(account);
+    //     setWalletAddress(`custom address: ${account["bech32Address"]}`);
+    //     // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
+    //   })
+    //   .catch((error) => {
+    //     console.error(error);
+    //     // alert(error.message);
+    //     setAccount(undefined);
+    //   });
   };
 
   const extensionConnect = async () => {
