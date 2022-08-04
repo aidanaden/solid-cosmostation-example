@@ -122,10 +122,10 @@ const App: Component = () => {
       setWcUri
     );
 
-    if (connector.connected) {
-      await connector.killSession();
-    }
-    await connector.createSession();
+    // if (connector.connected) {
+    //   await connector.killSession();
+    // }
+    // await connector.createSession();
 
     connector.on("disconnect", async (error, payload) => {
       setMobileConnected(false);
