@@ -121,13 +121,19 @@ const App: Component = () => {
       checkMobile(),
       setWcUri
     );
+
+    if (connector.connected) {
+      await connector.killSession();
+    }
+    await connector.createSession();
+
     connector.on("connect", async (error, payload) => {
       if (error) {
         alert(`error occurred while trying to connect via wc: ${error}`);
         setMobileConnected(false);
         throw error;
       }
-      await getAccounts();
+      await getAccounts(connector);
       setMobileConnected(true);
     });
     connector.on("disconnect", (error, payload) => {
@@ -163,14 +169,12 @@ const App: Component = () => {
   //   });
   // };
 
-  const getAccounts = async () => {
-    // if not connected via walletconnect, return
-    if (!connector()) return;
+  const getAccounts = async (connector: WalletConnect) => {
     // if wallet account already set, return
     if (account()) return;
 
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
-    connector()
+    connector
       ?.sendCustomRequest(request)
       .then((accounts) => {
         const account = accounts[0];

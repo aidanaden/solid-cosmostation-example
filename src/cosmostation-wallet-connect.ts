@@ -42,10 +42,6 @@ export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
       : [],
   };
 
-  if (connector.connected) {
-    await connector.killSession();
-  }
-  await connector.createSession();
   return connector;
 }
 
