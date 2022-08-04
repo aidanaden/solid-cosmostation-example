@@ -197,6 +197,8 @@ const App: Component = () => {
     // if wallet account already set, return
     if (account()) return;
 
+    alert(`fetching wallet account n address`);
+
     const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
     connector
       ?.sendCustomRequest(request)
