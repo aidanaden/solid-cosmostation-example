@@ -1,7 +1,6 @@
 import {
   isMobile as isMobileWC,
   isAndroid,
-  saveMobileLinkInfo,
 } from "@walletconnect/browser-utils";
 import { Component, createEffect, createMemo, on } from "solid-js";
 
@@ -29,24 +28,8 @@ const WalletConnectModal: Component<Props> = (props) => {
 
     if (checkMobile()) {
       if (checkAndroid()) {
-        // Save the mobile link.
-        saveMobileLinkInfo({
-          //   name: "Keplr",
-          name: "Cosmostation",
-          //   href: "intent://wcV1#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;",
-          href: "intent://wc#Intent;package=wannabit.io.cosmostaion;scheme=cosmostation;end;",
-        });
-
-        // return `intent://wcV1?${props.uri}#Intent;package=com.chainapsis.keplr;scheme=keplrwallet;end;`;
-
         return `intent://wc?${props.uri}#Intent;package=wannabit.io.cosmostaion;scheme=cosmostation;end;`;
       } else {
-        // Save the mobile link.
-        saveMobileLinkInfo({
-          name: "Cosmostation",
-          href: "cosmostation://wc",
-        });
-
         return `cosmostation://wc?${props.uri}`;
       }
     }

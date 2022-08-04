@@ -17,6 +17,7 @@ export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
           CosmostationQRCodeModal.open(uri, cb);
         }
         setWCUri(uri);
+        // TODO: set cb as ref to be called when WC modal closes
       },
       close: () => {
         setWCUri("");
@@ -44,9 +45,7 @@ export async function connect(isMobile: boolean, setWCUri: Setter<string>) {
   if (connector.connected) {
     await connector.killSession();
   }
-
   await connector.createSession();
-
   return connector;
 }
 
