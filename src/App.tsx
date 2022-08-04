@@ -127,19 +127,38 @@ const App: Component = () => {
     }
     await connector.createSession();
 
-    connector.on("connect", async (error, payload) => {
-      if (error) {
-        alert(`error occurred while trying to connect via wc: ${error}`);
-        setMobileConnected(false);
-        throw error;
-      }
-      await getAccounts(connector);
-      setMobileConnected(true);
-    });
     connector.on("disconnect", async (error, payload) => {
       setMobileConnected(false);
       await connector.killSession();
     });
+
+    if (!connector.connected) {
+      // create new session
+      await connector.createSession();
+      connector.on("connect", async (error, payload) => {
+        if (error) {
+          alert(`error occurred while trying to connect via wc: ${error}`);
+          setMobileConnected(false);
+          throw error;
+        }
+        await getAccounts(connector);
+        setMobileConnected(true);
+      });
+      // connector.on("connect", async (error) => {
+      //   if (error) {
+      //     console.error(error);
+      //   }
+      //   const keplr = new KeplrWalletConnectV1(connector, {
+      //     sendTx: sendTxWC,
+      //   });
+      //   setConnectionType("wallet-connect");
+      //   await setupKeplr(keplr);
+      //   return Promise.resolve(keplr);
+      // });
+    } else {
+      await getAccounts(connector);
+      setMobileConnected(true);
+    }
     setConnector(connector);
   };
 
