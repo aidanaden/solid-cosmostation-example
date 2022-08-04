@@ -125,10 +125,13 @@ const App: Component = () => {
       callbackClosed
     );
 
-    if (wcConnector.connected) {
-      await wcConnector.killSession();
+    // if (wcConnector.connected) {
+    //   await wcConnector.killSession();
+    // }
+    // await wcConnector.createSession();
+    if (!wcConnector.connected) {
+      await wcConnector.createSession();
     }
-    await wcConnector.createSession();
 
     wcConnector.on("disconnect", async (error, payload) => {
       if (error) {
