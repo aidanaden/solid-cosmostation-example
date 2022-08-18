@@ -6,6 +6,7 @@ import {
   onMount,
   Show,
   on,
+  Setter,
 } from "solid-js";
 import {
   Card,
@@ -25,6 +26,7 @@ import {
 import { isMobile } from "@walletconnect/browser-utils";
 import cosmostationWalletConnect from "./cosmostation-wallet-connect";
 import WalletConnect from "@walletconnect/client";
+import CosmostationQRCodeModal from "@walletconnect/qrcode-modal";
 import WalletConnectModal from "./WalletConnectModal";
 import { RequestAccountResponse } from "@cosmostation/extension-client/types/message";
 
@@ -54,7 +56,7 @@ const App: Component = () => {
     undefined
   );
   const [mobileConnected, setMobileConnected] = createSignal<boolean>(false);
-  const [wcUri, setWcUri] = createSignal<string>("");
+  const [wcUri, setWcUri] = createSignal<string | undefined>(undefined);
   const [account, setAccount] = createSignal<
     RequestAccountResponse | undefined
   >();
@@ -64,84 +66,70 @@ const App: Component = () => {
     Tendermint | undefined
   >(undefined);
   const [extensionConnected, setExtensionConnected] = createSignal(false);
-  const [extensionLastTxHash, setExtensionLastTxHash] = createSignal();
 
   const [walletAddress, setWalletAddress] = createSignal<string>("");
-  const [osmoAccount, setOsmoAccount] = createSignal();
-  const [lastTxHash, setLastTxHash] = createSignal();
+  const [connectionType, setConnectionType] = createSignal<
+    "extension" | "wallet-connect" | undefined
+  >();
   const checkMobile = () => isMobile();
 
   let callbackClosed: (() => void) | undefined;
 
-  // check for
-  onMount(() => {
-    let event: any;
-    void (async () => {
-      try {
-        if (checkMobile()) {
-          await mobileConnect();
-        }
+  async function connect(
+    isMobile: boolean,
+    setWCUri: Setter<string | undefined>,
+    callbackClosed: (() => void) | undefined
+  ) {
+    const connector = new WalletConnect({
+      bridge: "https://bridge.walletconnect.org",
+      signingMethods: [
+        "cosmostation_wc_accounts_v1",
+        "cosmostation_wc_sign_tx_v1",
+      ],
+      qrcodeModal: {
+        open: (uri: string, cb: any) => {
+          if (!isMobile) {
+            CosmostationQRCodeModal.open(uri, cb);
+          }
+          setWCUri(uri);
+          callbackClosed = cb;
+        },
+        close: () => {
+          setWCUri(undefined);
+          CosmostationQRCodeModal.close();
+        },
+      },
+    });
 
-        await extensionConnect();
-        event = extensionConnector()?.onAccountChanged(() =>
-          console.log("changed")
-        );
-      } catch (e) {
-        if (e instanceof InstallError) {
-          console.log("not installed");
-        } else {
-          console.log("failed");
-        }
-      }
-    })();
+    // XXX: I don't know why they designed that the client meta options in the constructor should be always ingored...
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    connector._clientMeta = {
+      name: "Coinhall",
+      description:
+        "Coinhall provides prices, charts, swap aggregations and analytics in realtime for Terra, Juno, and Cosmos chains.",
+      url: "https://coinhall.org/",
+      icons: [],
+    };
 
-    // onCleanup(() => {
-    //   void (async () => {
-    //     try {
-    //       if (extensionConnector()) {
-    //         extensionConnector()?.offAccountChanged(event);
-    //       }
-
-    //       if (mobileConnected()) {
-    //         await connector()
-    //           ?.killSession()
-    //           .catch((e) => console.error(e));
-    //       }
-    //     } catch (e) {
-    //       if (e instanceof InstallError) {
-    //         console.log("not installed");
-    //       } else {
-    //         console.log("failed");
-    //       }
-    //     }
-    //   })();
-    // });
-  });
+    return connector;
+  }
 
   const mobileConnect = async () => {
-    const wcConnector = await cosmostationWalletConnect.connect(
-      checkMobile(),
-      setWcUri,
-      callbackClosed
-    );
+    const wcConnector = await connect(checkMobile(), setWcUri, callbackClosed);
 
     if (wcConnector.connected) {
       await wcConnector.killSession();
     }
     await wcConnector.createSession();
-    // if (!wcConnector.connected) {
-    //   await wcConnector.createSession();
-    // }
+    setConnector(wcConnector);
 
     wcConnector.on("disconnect", async (error, payload) => {
       if (error) {
         console.error("error occurred on disconnect: ", error);
         return;
       }
-      await connector()
-        ?.killSession()
-        .catch((err) => console.error(err));
-      setMobileConnected(false);
+      await mobileDisconnect();
     });
 
     wcConnector.on("connect", async (error, payload) => {
@@ -151,37 +139,9 @@ const App: Component = () => {
         return;
       }
       await getAccounts(connector());
+      setConnectionType("wallet-connect");
       setMobileConnected(true);
     });
-
-    // if (!wcConnector.connected) {
-    //   // create new session
-    //   await wcConnector.createSession();
-    //   wcConnector.on("connect", async (error, payload) => {
-    //     if (error) {
-    //       console.error("error occurred on disconnect: ", error);
-    //       setMobileConnected(false);
-    //       return;
-    //     }
-    //     await getAccounts(connector());
-    //     setMobileConnected(true);
-    //   });
-    //   // connector.on("connect", async (error) => {
-    //   //   if (error) {
-    //   //     console.error(error);
-    //   //   }
-    //   //   const keplr = new KeplrWalletConnectV1(connector, {
-    //   //     sendTx: sendTxWC,
-    //   //   });
-    //   //   setConnectionType("wallet-connect");
-    //   //   await setupKeplr(keplr);
-    //   //   return Promise.resolve(keplr);
-    //   // });
-    // } else {
-    //   await getAccounts(connector());
-    //   setMobileConnected(true);
-    // }
-    setConnector(wcConnector);
   };
 
   const mobileDisconnect = async () => {
@@ -196,6 +156,7 @@ const App: Component = () => {
     await connector()
       ?.killSession()
       .catch((err) => console.error(err));
+
     setConnector(undefined);
     setMobileConnected(false);
   };
@@ -233,20 +194,6 @@ const App: Component = () => {
       console.error(err);
       setAccount(undefined);
     }
-
-    // connector
-    //   .sendCustomRequest(request)
-    //   .then((accounts) => {
-    //     const account = accounts[0];
-    //     setAccount(account);
-    //     setWalletAddress(`custom address: ${account["bech32Address"]}`);
-    //     // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
-    //   })
-    //   .catch((error) => {
-    //     console.error(error);
-    //     // alert(error.message);
-    //     setAccount(undefined);
-    //   });
   };
 
   const extensionConnect = async () => {
@@ -294,6 +241,102 @@ const App: Component = () => {
       console.error(e);
     }
   };
+
+  // Init Osmosis account w/ desired connection type (wallet connect, extension)
+  // if prev connected Keplr in this browser.
+  onMount(async () => {
+    let event: any;
+
+    if (typeof localStorage === "undefined") {
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      console.log("window is undefined, returning undefined...");
+      return;
+    }
+
+    const value = localStorage.getItem("account_auto_connect_cosmostation");
+    if (!value) {
+      return;
+    }
+
+    if (value === "wallet-connect") {
+      // if account auto connect method set to wallet-connect,
+      // connect using wallet-connect
+      const wcConnector = await connect(
+        checkMobile(),
+        setWcUri,
+        callbackClosed
+      );
+      if (wcConnector.connected) {
+        await getAccounts(wcConnector);
+        setConnector(wcConnector);
+        setConnectionType("wallet-connect");
+        setMobileConnected(true);
+      }
+      return;
+    } else {
+      // otherwise, auto connect method is set to extension,
+      // connect using extension
+      event = await extensionConnect();
+    }
+
+    // if (isMobileDevice()) {
+    //   // Force emit "select_wallet_connect" event if on mobile browser environment.
+    //   await mobileConnect();
+    // }
+
+    onCleanup(() => {
+      void (async () => {
+        try {
+          if (extensionConnected()) {
+            extensionConnector()?.offAccountChanged(event);
+          }
+
+          if (mobileConnected()) {
+            await connector()
+              ?.killSession()
+              .catch((e) => console.error(e));
+          }
+        } catch (e) {
+          if (e instanceof InstallError) {
+            // setIsExtensionNotInstalled(true);
+            console.error("extension not installed");
+          } else {
+            console.error("failed to disconnect from extension: ", e);
+          }
+        }
+      })();
+    });
+  });
+
+  // React to changes in keplr account state; store desired connection type in browser
+  // clear Keplr sessions, disconnect account.
+  createEffect(
+    on(
+      [extensionConnected, mobileConnected],
+      async ([extensionConnected, mobileConnected]) => {
+        if (typeof localStorage === undefined) {
+          return;
+        }
+        if (extensionConnected) {
+          localStorage.setItem(
+            "account_auto_connect_cosmostation",
+            "extension"
+          );
+          return;
+        }
+        if (mobileConnected) {
+          localStorage.setItem(
+            "account_auto_connect_cosmostation",
+            "wallet-connect"
+          );
+          return;
+        }
+      }
+    )
+  );
 
   return (
     <>
@@ -495,8 +538,8 @@ const App: Component = () => {
         </Stack>
       </Container>
       <WalletConnectModal
-        isVisible={wcUri().length > 0 && checkMobile()}
-        uri={wcUri()}
+        isVisible={!!wcUri() && checkMobile()}
+        uri={wcUri() ?? ""}
       />
     </>
   );

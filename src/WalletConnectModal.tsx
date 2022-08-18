@@ -38,7 +38,6 @@ const WalletConnectModal: Component<Props> = (props) => {
   createEffect(
     on(navigateToAppURL, (appUrl) => {
       // Try opening the app without interaction.
-      console.log("app url is: ", appUrl);
       if (appUrl) {
         window.location.href = appUrl;
       }

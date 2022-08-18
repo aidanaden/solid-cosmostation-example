@@ -16,6 +16,13 @@
     "vite-plugin-solid": "^2.3.0"
   },
   "dependencies": {
+    "osmojs": "^0.10.6",
+    "@cosmjs/amino": "^0.28.11",
+    "@cosmjs/cosmwasm-stargate": "^0.28.11",
+    "@cosmjs/launchpad": "^0.27.1",
+    "@cosmjs/proto-signing": "^0.28.11",
+    "@cosmology/core": "^0.8.3",
+    "@cosmostation/cosmos-client": "^0.0.1",
     "@cosmostation/extension-client": "^0.1.4",
     "@walletconnect/browser-utils": "^1.7.8",
     "@walletconnect/client": "^1.7.8",
