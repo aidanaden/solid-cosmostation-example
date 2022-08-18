@@ -123,7 +123,6 @@ const App: Component = () => {
       await wcConnector.killSession();
     }
     await wcConnector.createSession();
-    setConnector(wcConnector);
 
     wcConnector.on("disconnect", async (error, payload) => {
       if (error) {
