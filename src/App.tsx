@@ -29,6 +29,7 @@ import WalletConnect from "@walletconnect/client";
 import CosmostationQRCodeModal from "@walletconnect/qrcode-modal";
 import WalletConnectModal from "./WalletConnectModal";
 import { RequestAccountResponse } from "@cosmostation/extension-client/types/message";
+import junoChainInfo from "./juno";
 
 // const CHAIN_ID = "crescent-1";
 // const LCD_ENDPOINT = "https://lcd-crescent.cosmostation.io";
@@ -178,18 +179,23 @@ const App: Component = () => {
 
   const getAccounts = async (connector: WalletConnect | undefined) => {
     // if wallet account already set, return
-    if (account()) return;
+    if (account()) {
+      return;
+    }
 
-    if (!connector) return;
+    if (!connector) {
+      return;
+    }
 
-    const request = cosmostationWalletConnect.getAccountsRequest([CHAIN_ID]);
+    const request = cosmostationWalletConnect.getAccountsRequest([
+      junoChainInfo.chainId,
+    ]);
     try {
-      // alert(`fetching wallet account n address with connector ${connector}`);
+      window.location.href = `cosmostation://wc?`;
       const accounts = await connector.sendCustomRequest(request);
       const account = accounts[0];
       setAccount(account);
       setWalletAddress(account["bech32Address"]);
-      // alert(`wallet connect setting address to: ${account["bech32Address"]}`);
     } catch (err) {
       console.error(err);
       setAccount(undefined);
