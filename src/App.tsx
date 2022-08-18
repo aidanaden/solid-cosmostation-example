@@ -182,23 +182,35 @@ const App: Component = () => {
       return;
     }
 
-    if (!connector) {
+    if (!connector || connector === undefined) {
       return;
     }
 
     const request = cosmostationWalletConnect.getAccountsRequest([
       junoChainInfo.chainId,
     ]);
-    try {
-      // window.location.href = `cosmostation://wc`;
-      const accounts = await connector.sendCustomRequest(request);
-      const account = accounts[0];
-      setAccount(account);
-      setWalletAddress(account["bech32Address"]);
-    } catch (err) {
-      console.error(err);
-      setAccount(undefined);
-    }
+
+    connector
+      .sendCustomRequest(request)
+      .then((accounts) => {
+        const account = accounts[0];
+        setAccount(account);
+        setWalletAddress(account["bech32Address"]);
+      })
+      .catch((err) => {
+        console.error(err);
+        setAccount(undefined);
+      });
+    // try {
+    //   // window.location.href = `cosmostation://wc`;
+    //   const accounts = await connector.sendCustomRequest(request);
+    //   const account = accounts[0];
+    //   setAccount(account);
+    //   setWalletAddress(account["bech32Address"]);
+    // } catch (err) {
+    //   console.error(err);
+    //   setAccount(undefined);
+    // }
   };
 
   const extensionConnect = async () => {
