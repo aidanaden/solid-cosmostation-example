@@ -191,7 +191,7 @@ const App: Component = () => {
       junoChainInfo.chainId,
     ]);
     try {
-      window.location.href = `cosmostation://wc?`;
+      window.location.href = `cosmostation://wc`;
       const accounts = await connector.sendCustomRequest(request);
       const account = accounts[0];
       setAccount(account);
