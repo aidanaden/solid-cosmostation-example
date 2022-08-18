@@ -318,7 +318,9 @@ const App: Component = () => {
 
   createEffect(
     on(connector, async (connector) => {
-      await getAccounts(connector);
+      if (connector !== undefined) {
+        await getAccounts(connector);
+      }
     })
   );
 
