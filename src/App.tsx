@@ -139,7 +139,7 @@ const App: Component = () => {
         setMobileConnected(false);
         return;
       }
-      await getAccounts(connector());
+      setConnector(wcConnector);
       setConnectionType("wallet-connect");
       setMobileConnected(true);
     });
@@ -276,7 +276,7 @@ const App: Component = () => {
         callbackClosed
       );
       if (wcConnector.connected) {
-        await getAccounts(wcConnector);
+        // await getAccounts(wcConnector);
         setConnector(wcConnector);
         setConnectionType("wallet-connect");
         setMobileConnected(true);
@@ -316,6 +316,12 @@ const App: Component = () => {
       })();
     });
   });
+
+  createEffect(
+    on(connector, async (connector) => {
+      await getAccounts(connector);
+    })
+  );
 
   // React to changes in keplr account state; store desired connection type in browser
   // clear Keplr sessions, disconnect account.
