@@ -28,8 +28,50 @@ import cosmostationWalletConnect from "./cosmostation-wallet-connect";
 import WalletConnect from "@walletconnect/client";
 import CosmostationQRCodeModal from "@walletconnect/qrcode-modal";
 import WalletConnectModal from "./WalletConnectModal";
-import { RequestAccountResponse } from "@cosmostation/extension-client/types/message";
+import {
+  RequestAccountResponse,
+  SignAminoDoc,
+} from "@cosmostation/extension-client/types/message";
 import junoChainInfo from "./juno";
+import { AccountData, Coin, coin } from "@cosmjs/amino";
+import {
+  OsmosisApiClient,
+  prettyPool,
+  getPricesFromCoinGecko,
+  makePoolsPretty,
+  displayUnitsToDenomUnits,
+  CoinValue,
+  convertCoinToDisplayValues,
+  getPrice,
+  makePoolPairs,
+  lookupRoutesForTrade,
+  calculateAmountWithSlippage,
+  messages,
+  signAndBroadcast,
+} from "@cosmology/core";
+import { Long } from "@osmonauts/helpers";
+import {
+  BroadcastTxResponse,
+  estimateOsmoFee,
+  getSigningOsmosisClient,
+} from "osmojs";
+import osmoChainInfo from "./osmo";
+import { OfflineSigner } from "@cosmjs/proto-signing";
+import { SigningStargateClient } from "@cosmjs/stargate";
+import { SigningCosmWasmClient } from "@cosmjs/cosmwasm-stargate";
+
+export const printOsmoTransactionResponse = (res: BroadcastTxResponse) => {
+  if (res.code === 0) {
+    console.log(
+      `TX: https://www.mintscan.io/osmosis/txs/${res.transactionHash}`
+    );
+  } else {
+    console.log(res.rawLog);
+    console.log(
+      `TX: https://www.mintscan.io/osmosis/txs/${res.transactionHash}`
+    );
+  }
+};
 
 // const CHAIN_ID = "crescent-1";
 // const LCD_ENDPOINT = "https://lcd-crescent.cosmostation.io";
@@ -49,7 +91,12 @@ const DISPLAY_DENOM = "JUNO";
 
 const OSMO_CHAIN_ID = "osmosis-1";
 const OSMO_LCD_ENDPOINT = "https://lcd-osmosis-app.cosmostation.io";
+const OSMO_RPC_ENDPOINT = "https://rpc.osmosis.zone";
 const OSMO_TO_ADDRESS = "osmo1ze2ye5u5k3qdlexvt2e0nn0508p0409465lts4";
+const OSMO_DENOM = "uosmo";
+const OSMO_EXPLORER_LINK = "https://www.mintscan.io/osmo/txs";
+const OSMO_CHAIN_NAME = "osmo";
+const OSMO_DISPLAY_DENOM = "OSMO";
 
 const App: Component = () => {
   // wc state values
@@ -58,9 +105,10 @@ const App: Component = () => {
   );
   const [mobileConnected, setMobileConnected] = createSignal<boolean>(false);
   const [wcUri, setWcUri] = createSignal<string | undefined>(undefined);
-  const [account, setAccount] = createSignal<
-    RequestAccountResponse | undefined
-  >();
+  // const [account, setAccount] = createSignal<
+  //   RequestAccountResponse | undefined
+  // >();
+  const [account, setAccount] = createSignal<AccountData | undefined>();
 
   // extension state values
   const [extensionConnector, setExtensionConnector] = createSignal<
@@ -69,6 +117,9 @@ const App: Component = () => {
   const [extensionConnected, setExtensionConnected] = createSignal(false);
 
   const [walletAddress, setWalletAddress] = createSignal<string>("");
+  const [walletBalance, setWalletBalance] = createSignal<string>("");
+  const [offlineSigner, setOfflineSigner] = createSignal<OfflineSigner>();
+  const [client, setClient] = createSignal<SigningStargateClient>();
   const [connectionType, setConnectionType] = createSignal<
     "extension" | "wallet-connect" | undefined
   >();
@@ -138,6 +189,7 @@ const App: Component = () => {
         setMobileConnected(false);
         return;
       }
+      await getAccounts(connector());
       setConnector(wcConnector);
       setConnectionType("wallet-connect");
       setMobileConnected(true);
@@ -187,37 +239,101 @@ const App: Component = () => {
     }
 
     const request = cosmostationWalletConnect.getAccountsRequest([
-      junoChainInfo.chainId,
+      osmoChainInfo.chainId,
     ]);
 
-    connector
-      .sendCustomRequest(request)
-      .then((accounts) => {
-        const account = accounts[0];
-        setAccount(account);
-        setWalletAddress(account["bech32Address"]);
-      })
-      .catch((err) => {
-        console.error(err);
-        setAccount(undefined);
-      });
-    // try {
-    //   // window.location.href = `cosmostation://wc`;
-    //   const accounts = await connector.sendCustomRequest(request);
-    //   const account = accounts[0];
-    //   setAccount(account);
-    //   setWalletAddress(account["bech32Address"]);
-    // } catch (err) {
-    //   console.error(err);
-    //   setAccount(undefined);
-    // }
+    try {
+      // window.location.href = `cosmostation://wc`;
+      const accounts = await connector.sendCustomRequest(request);
+      const account = accounts[0];
+      setAccount(account);
+      setWalletAddress(account["bech32Address"]);
+    } catch (err) {
+      console.error(err);
+      setAccount(undefined);
+    }
+  };
+
+  const getExtensionSigner = (
+    accountInfo: RequestAccountResponse,
+    connector: Tendermint,
+    chainName: string
+  ) => {
+    const signer: OfflineSigner = {
+      getAccounts: async () => {
+        return [
+          {
+            address: accountInfo.address,
+            pubkey: accountInfo.publicKey,
+            algo: "secp256k1",
+          },
+        ];
+      },
+      signAmino: async (_, signDoc) => {
+        const response = await connector.signAmino(
+          chainName,
+          signDoc as unknown as SignAminoDoc
+        );
+
+        return {
+          signed: response.signed_doc,
+          signature: {
+            pub_key: response.pub_key,
+            signature: response.signature,
+          },
+        };
+      },
+      signDirect: async (_, signDoc) => {
+        const response = await connector.signDirect(chainName, {
+          account_number: String(signDoc.accountNumber),
+          auth_info_bytes: signDoc.authInfoBytes,
+          body_bytes: signDoc.bodyBytes,
+          chain_id: signDoc.chainId,
+        });
+        return {
+          signed: {
+            accountNumber: response.signed_doc
+              .account_number as unknown as Long,
+            chainId: response.signed_doc.chain_id,
+            authInfoBytes: response.signed_doc.auth_info_bytes,
+            bodyBytes: response.signed_doc.body_bytes,
+          },
+          signature: {
+            pub_key: response.pub_key,
+            signature: response.signature,
+          },
+        };
+      },
+    };
+    return signer;
   };
 
   const extensionConnect = async () => {
     try {
-      setExtensionConnector(await tendermint());
+      console.log("trying to connect via tendermint()");
+      const connector = await tendermint();
+      setExtensionConnector(connector);
+      const junoAccountInfo = await connector.requestAccount("juno-1");
+      const osmoAccountInfo = await connector.requestAccount("osmosis");
+      const osmoOfflineSigner = await getExtensionSigner(
+        osmoAccountInfo,
+        connector,
+        "osmosis"
+      );
+      const walletInfo = {
+        name: osmoAccountInfo.name,
+        pubKey: osmoAccountInfo.publicKey,
+      };
+      const osmoClient = await getSigningOsmosisClient({
+        rpcEndpoint: OSMO_RPC_ENDPOINT,
+        signer: osmoOfflineSigner,
+      });
+      await getExtensionAccountSigner(osmoClient, osmoOfflineSigner);
+      setOfflineSigner(osmoOfflineSigner);
+      setClient(osmoClient);
       await getExtensionAccounts();
-    } catch {
+    } catch (err) {
+      console.error(err);
       setExtensionConnected(false);
     }
   };
@@ -226,6 +342,33 @@ const App: Component = () => {
     setExtensionConnector(undefined);
     setExtensionConnected(false);
   };
+
+  async function getExtensionAccountSigner(
+    client: SigningCosmWasmClient | SigningStargateClient | undefined,
+    signer: OfflineSigner
+  ) {
+    if (client === undefined) {
+      return;
+    }
+
+    const accounts = await signer.getAccounts();
+    console.log("accounts: ", accounts);
+    if (!accounts) {
+      return;
+    }
+    const account = accounts[0];
+    setAccount(account);
+    const { address } = account;
+    const balance = await client?.getBalance(address, osmoChainInfo.baseDenom);
+    const formattedBalance: number =
+      parseInt(balance?.amount as string) / 1000000;
+
+    console.log({ address, formattedBalance });
+
+    setWalletAddress(address);
+    setWalletBalance(formattedBalance.toString());
+    setExtensionConnected(true);
+  }
 
   const getExtensionAccounts = async () => {
     try {
@@ -236,20 +379,20 @@ const App: Component = () => {
         ![
           ...supportedChains!.official,
           ...supportedChains!.unofficial,
-        ].includes(CHAIN_NAME)
+        ].includes(OSMO_CHAIN_NAME)
       ) {
         await extensionConnector()?.addChain({
-          chainId: CHAIN_ID,
-          chainName: CHAIN_NAME,
-          addressPrefix: "juno",
-          baseDenom: DENOM,
-          displayDenom: DISPLAY_DENOM,
-          restURL: LCD_ENDPOINT,
+          chainId: OSMO_CHAIN_ID,
+          chainName: OSMO_CHAIN_NAME,
+          addressPrefix: "osmo",
+          baseDenom: OSMO_DENOM,
+          displayDenom: OSMO_DISPLAY_DENOM,
+          restURL: OSMO_LCD_ENDPOINT,
         });
       }
 
       const accountInfo = await extensionConnector()?.requestAccount(
-        CHAIN_NAME
+        OSMO_CHAIN_NAME
       );
 
       setWalletAddress(accountInfo ? accountInfo.address : "");
@@ -287,7 +430,7 @@ const App: Component = () => {
         callbackClosed
       );
       if (wcConnector.connected) {
-        // await getAccounts(wcConnector);
+        await getAccounts(wcConnector);
         setConnector(wcConnector);
         setConnectionType("wallet-connect");
         setMobileConnected(true);
@@ -328,14 +471,6 @@ const App: Component = () => {
     });
   });
 
-  createEffect(
-    on(connector, async (connector) => {
-      if (connector !== undefined) {
-        await getAccounts(connector);
-      }
-    })
-  );
-
   // React to changes in keplr account state; store desired connection type in browser
   // clear Keplr sessions, disconnect account.
   createEffect(
@@ -362,6 +497,111 @@ const App: Component = () => {
       }
     )
   );
+
+  const makeOsmoSwap = async () => {
+    const api = new OsmosisApiClient({
+      // url: osmoRpcEndpoint,
+      url: "https://lcd-osmosis.blockapsis.com",
+    });
+    const lcdPools = await api.getPools();
+    const pools = lcdPools.pools.map((pool) => prettyPool(pool));
+    const prices = await getPricesFromCoinGecko();
+    const prettyPools = makePoolsPretty(prices, lcdPools.pools);
+
+    const tokenInDenomUnits = displayUnitsToDenomUnits(
+      osmoChainInfo.displayDenom,
+      "0.1"
+    );
+    const tokenInBase: Coin = {
+      denom: osmoChainInfo.baseDenom,
+      amount: tokenInDenomUnits,
+    };
+    const convertedCoinInValue: CoinValue = convertCoinToDisplayValues({
+      prices,
+      coin: tokenInBase,
+    });
+
+    const tokenOutDenomUnits = displayUnitsToDenomUnits("ATOM", "0.01");
+    const tokenOutBase: Coin = {
+      denom:
+        "ibc/27394FB092D2ECCD56123C74F36E4C1F926001CEADA9CA97EA622B25F41E5EB2",
+      amount: tokenOutDenomUnits,
+    };
+    const convertedCoinOutValue: CoinValue = convertCoinToDisplayValues({
+      prices,
+      coin: tokenOutBase,
+    });
+
+    console.log({ convertedCoinInValue, convertedCoinOutValue });
+
+    const tokenInPrice = getPrice(prices, convertedCoinInValue.symbol);
+    const tokenOutPrice = getPrice(prices, convertedCoinOutValue.symbol);
+
+    console.log({ tokenInPrice, tokenOutPrice });
+
+    const pairs = makePoolPairs(prettyPools);
+    const routes = lookupRoutesForTrade({
+      // pools,
+      trade: {
+        sell: convertedCoinInValue,
+        buy: convertedCoinOutValue,
+        beliefValue: "",
+      },
+      pairs,
+    }).map((tradeRoute) => {
+      const { poolId, tokenOutDenom } = tradeRoute;
+      return {
+        poolId: poolId as unknown as Long,
+        tokenOutDenom,
+      };
+    });
+
+    const slippage = 0.5;
+    const tokenOutMinAmount = parseInt(
+      calculateAmountWithSlippage(convertedCoinOutValue.amount, slippage)
+    ).toString();
+
+    console.log({ routes });
+
+    if (!walletAddress()) {
+      console.log("account address is null");
+      return;
+    }
+
+    console.log(
+      `token in: ${convertedCoinInValue.amount} token out: ${convertedCoinOutValue.amount} token out min: ${tokenOutMinAmount}`
+    );
+
+    const msg = messages.swapExactAmountIn({
+      sender: walletAddress(), // osmo address
+      routes: routes, // TradeRoute
+      tokenIn: coin(
+        parseInt(convertedCoinInValue.amount),
+        convertedCoinInValue.denom
+      ), // Coin
+      tokenOutMinAmount, // number as string with no decimals
+    });
+
+    if (!client() || client() === undefined) {
+      console.log("osmo client is null");
+      return;
+    }
+
+    const fee = await estimateOsmoFee(client()!, walletAddress(), [msg], "");
+    console.log({ msg, fee });
+
+    const res = await signAndBroadcast({
+      client: client()!,
+      chainId: OSMO_CHAIN_ID,
+      address: walletAddress(),
+      msg,
+      fee,
+      memo: "",
+    });
+
+    console.log({ res });
+    printOsmoTransactionResponse(res);
+  };
 
   return (
     <>
@@ -425,7 +665,7 @@ const App: Component = () => {
                       type="submit"
                       variant="primary"
                       // onClick={() => openWallet(junoChainInfo)
-                      onClick={mobileConnect}
+                      onClick={extensionConnect}
                     >
                       Connect cosmostation via walletconnect
                     </Button>
@@ -456,7 +696,11 @@ const App: Component = () => {
               <Button
                 type="submit"
                 variant="primary"
-                onClick={() => alert(`wallet address: ${walletAddress()}`)}
+                onClick={() =>
+                  alert(
+                    `wallet address: ${walletAddress()} balance: ${walletBalance()}`
+                  )
+                }
               >
                 Get address
               </Button>
@@ -465,101 +709,11 @@ const App: Component = () => {
           <Card>
             <Card.Header>Sign something on Juno</Card.Header>
             <Card.Body>
-              <Button
-                type="submit"
-                variant="primary"
-                // onClick={() => signSomething(junoChainInfo)}
-              >
-                Sign
+              <Button type="submit" variant="primary" onClick={makeOsmoSwap}>
+                swap osmo for atom
               </Button>
             </Card.Body>
           </Card>
-          {/* <Card>
-          <Card.Header>Send coin(s) on Juno</Card.Header>
-          <Card.Body>
-            <b>Address:</b>
-            <div id="address"></div>
-            <Form name="sendForm" onSubmit={(e) => onSubmit(e, junoChainInfo)}>
-              <Stack gap={3}>
-                <Form.Group>
-                  <label for="recipient">Recipient</label>
-                  <Form.Control id="recipient" name="recipient" />
-                </Form.Group>
-                <Form.Group>
-                  <label for="amount">Amount</label>
-                  <InputGroup>
-                    <Form.Control id="amount" name="amount" />
-                    <InputGroup.Text>JUNO</InputGroup.Text>
-                  </InputGroup>
-                </Form.Group>
-                <Button type="submit" variant="primary">
-                  Submit
-                </Button>
-              </Stack>
-            </Form>
-          </Card.Body>
-        </Card>
-        <Card>
-          <Card.Header>Connect Osmosis wallet</Card.Header>
-          <Card.Body>
-            <Button
-              type="submit"
-              variant="primary"
-              onClick={() => openWallet(osmoChainInfo)}
-            >
-              Connect kepler
-            </Button>
-          </Card.Body>
-        </Card>
-        <Card>
-          <Card.Header>Get Osmosis wallet address</Card.Header>
-          <Card.Body>
-            <Button
-              type="submit"
-              variant="primary"
-              onClick={() => getAddress(osmoChainInfo)}
-            >
-              Get address
-            </Button>
-          </Card.Body>
-        </Card>
-        <Card>
-          <Card.Header>Sign Something on Osmosis</Card.Header>
-          <Card.Body>
-            <Button
-              type="submit"
-              variant="primary"
-              onClick={() => signSomething(osmoChainInfo)}
-            >
-              Sign
-            </Button>
-          </Card.Body>
-        </Card>
-        <Card>
-          <Card.Header>Send Coin on Osmosis</Card.Header>
-          <Card.Body>
-            <b>Address:</b>
-            <div id="address"></div>
-            <Form name="sendForm" onSubmit={(e) => onSubmit(e, osmoChainInfo)}>
-              <Stack gap={3}>
-                <Form.Group>
-                  <label for="recipient">Recipient</label>
-                  <Form.Control id="recipient" name="recipient" />
-                </Form.Group>
-                <Form.Group>
-                  <label for="amount">Amount</label>
-                  <InputGroup>
-                    <Form.Control id="amount" name="amount" />
-                    <InputGroup.Text>OSMO</InputGroup.Text>
-                  </InputGroup>
-                </Form.Group>
-                <Button type="submit" variant="primary">
-                  Submit
-                </Button>
-              </Stack>
-            </Form>
-          </Card.Body>
-        </Card> */}
         </Stack>
       </Container>
       <WalletConnectModal
